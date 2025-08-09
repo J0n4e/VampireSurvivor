@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vampire Survivors Clone</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: #000000;
+            color: #eee;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        #mainWrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #uiContainer {
+            width: 800px;
+            height: 80px;
+            position: relative;
+            display: none; /* Hidden by default */
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0,0,0,0.3);
+            border: 2px solid #533483;
+            border-radius: 10px;
+            padding: 10px 20px;
+            box-sizing: border-box;
+        }
+
+        #uiContainer.visible {
+            display: flex;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: #000000;
+            border: 3px solid #533483;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #000000;
+            width: 800px;
+            height: 600px;
+            position: relative;
+            z-index: 1;
+        }
+
+        #ui {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            font-size: 14px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            min-width: 150px;
+        }
+
+        #centerUI {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        #xpBar {
+            position: relative;
+            width: 300px;
+            height: 20px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #4caf50;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #xpFill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #8bc34a);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        #xpText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 12px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        #healthBar {
+            position: relative;
+            width: 200px;
+            height: 15px;
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #f44336;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #healthFill {
+            height: 100%;
+            background: linear-gradient(90deg, #f44336, #ff7043);
+            width: 100%;
+            transition: width 0.3s ease;
+        }
+
+        #healthText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.9);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            display: none;
+            z-index: 20;
+            border: 2px solid #533483;
+        }
+
+        #gameOver h2 {
+            color: #ff6b6b;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        #restartBtn {
+            background: #533483;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+
+        #restartBtn:hover {
+            background: #6c4f87;
+        }
+
+
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/MainMenuBackground.png');
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+        }
+
+        #howToPlayScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/MainMenuBackground.png');
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            display: none;
+        }
+
+        #startScreen.hidden, #howToPlayScreen.hidden {
+            display: none;
+        }
+
+        .start-content, .how-to-play-content {
+            text-align: center;
+            background: transparent;
+            padding: 40px;
+            border-radius: 20px;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .game-title {
+            font-size: 42px;
+            color: #ffeb3b;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            font-weight: bold;
+        }
+
+        .game-subtitle {
+            font-size: 18px;
+            color: #4ecdc4;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+        }
+
+        .game-description {
+            font-size: 14px;
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 500px;
+        }
+
+        .controls-info {
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border: 1px solid #4ecdc4;
+        }
+
+        .controls-title {
+            font-size: 16px;
+            color: #4ecdc4;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .controls-list {
+            font-size: 13px;
+            color: #eee;
+            line-height: 1.5;
+        }
+
+        #startBtn, #howToPlayBtn, #backBtn {
+            background: linear-gradient(45deg, #533483, #6c4f87);
+            color: white;
+            border: 2px solid #ffeb3b;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            box-shadow: 0 4px 15px rgba(255, 235, 59, 0.3);
+            margin: 10px;
+        }
+
+        #startBtn:hover, #howToPlayBtn:hover, #backBtn:hover {
+            background: linear-gradient(45deg, #6c4f87, #7e5d9a);
+            box-shadow: 0 6px 20px rgba(255, 235, 59, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .version-info {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #ccc;
+            text-align: right;
+        }
+
+        .weapon-indicator {
+            background: rgba(0,0,0,0.7);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: right;
+            min-width: 150px;
+        }
+
+        #levelUpScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/UpgradeMenuBackground.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            display: none;
+            z-index: 15;
+        }
+
+        #upgrade-portrait-container {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            width: 200px;
+            height: 200px;
+            background-image: url('assets/FrameMainCharacter.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+        }
+
+        #upgrade-portrait-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        #upgrade-options-container {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 40px;
+        }
+
+        .upgrade-card {
+            width: 200px;
+            height: 200px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 35px 15px;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            line-height: 1.1;
+            word-wrap: break-word;
+            background-image: url('assets/FrameItems.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+            background-position: center;
+            box-sizing: border-box;
+        }
+
+        #upgrade-description-panel {
+            position: absolute;
+            top: 50px;
+            right: 50px;
+            width: 300px;
+            height: 150px;
+            padding: 20px;
+            color: white;
+            background-image: url('assets/FrameItemDescription.png');
+            background-size: 100% 100%;
+            background-repeat: no-repeat;
+        }
+
+        #highScoreScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/MainMenuBackground.png');
+            background-size: cover;
+            display: none;
+            z-index: 25;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            box-sizing: border-box;
+        }
+
+        .highscore-content {
+            text-align: center;
+            background: rgba(0,0,0,0.8);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #533483;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .highscore-title {
+            font-size: 36px;
+            color: #ffeb3b;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            font-weight: bold;
+        }
+
+        .highscore-list {
+            margin: 20px 0;
+            color: white;
+        }
+
+        .highscore-entry {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            margin: 5px 0;
+            background: rgba(83, 52, 131, 0.3);
+            border-radius: 8px;
+            font-size: 18px;
+        }
+
+        .highscore-entry.new {
+            background: rgba(255, 235, 59, 0.3);
+            border: 2px solid #ffeb3b;
+        }
+
+        .highscore-rank {
+            font-weight: bold;
+            color: #4ecdc4;
+            min-width: 30px;
+        }
+
+        .highscore-name {
+            font-weight: bold;
+            min-width: 60px;
+        }
+
+        .highscore-score {
+            font-weight: bold;
+            color: #ffeb3b;
+        }
+
+        #nameEntryScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('assets/MainMenuBackground.png');
+            background-size: cover;
+            display: none;
+            z-index: 30;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .name-entry-content {
+            text-align: center;
+            background: rgba(0,0,0,0.9);
+            padding: 40px;
+            border-radius: 20px;
+            border: 2px solid #ffeb3b;
+            max-width: 400px;
+        }
+
+        .name-entry-title {
+            font-size: 32px;
+            color: #ffeb3b;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            font-weight: bold;
+        }
+
+        .score-display {
+            font-size: 24px;
+            color: #4ecdc4;
+            margin-bottom: 30px;
+        }
+
+        .name-input-container {
+            margin: 20px 0;
+        }
+
+        .name-input {
+            background: rgba(0,0,0,0.7);
+            border: 2px solid #533483;
+            border-radius: 8px;
+            color: white;
+            font-size: 32px;
+            text-align: center;
+            width: 120px;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 10px;
+        }
+
+        .name-input:focus {
+            border-color: #ffeb3b;
+            outline: none;
+        }
+
+        #submitScoreBtn {
+            background: linear-gradient(45deg, #533483, #6c4f87);
+            color: white;
+            border: 2px solid #ffeb3b;
+            padding: 12px 30px;
+            font-size: 18px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+
+        #submitScoreBtn:hover {
+            background: linear-gradient(45deg, #6c4f87, #7e5d9a);
+            transform: translateY(-2px);
+        }
+
+        #highScoreBtn {
+            background: linear-gradient(45deg, #533483, #6c4f87);
+            color: white;
+            border: 2px solid #ffeb3b;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            box-shadow: 0 4px 15px rgba(255, 235, 59, 0.3);
+            margin: 10px;
+        }
+
+        #highScoreBtn:hover {
+            background: linear-gradient(45deg, #6c4f87, #7e5d9a);
+            box-shadow: 0 6px 20px rgba(255, 235, 59, 0.5);
+            transform: translateY(-2px);
+        }
+
+        #backToMenuBtn {
+            background: linear-gradient(45deg, #533483, #6c4f87);
+            color: white;
+            border: 2px solid #ffeb3b;
+            padding: 15px 40px;
+            font-size: 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            box-shadow: 0 4px 15px rgba(255, 235, 59, 0.3);
+            margin-top: 20px;
+        }
+
+        #backToMenuBtn:hover {
+            background: linear-gradient(45deg, #6c4f87, #7e5d9a);
+            box-shadow: 0 6px 20px rgba(255, 235, 59, 0.5);
+            transform: translateY(-2px);
+        }
+
+    </style>
+</head>
+<body>
+    <div id="mainWrapper">
+        <div id="uiContainer">
+            <div id="ui">
+                <div>Level: <span id="level">1</span></div>
+                <div>Score: <span id="score">0</span></div>
+                <div>Time: <span id="time">0:00</span></div>
+            </div>
+            
+            <div id="centerUI">
+                <div id="xpBar">
+                    <div id="xpFill"></div>
+                    <div id="xpText">XP: 0 / 7</div>
+                </div>
+                <div id="healthBar">
+                    <div id="healthFill"></div>
+                    <div id="healthText">100 / 100</div>
+                </div>
+            </div>
+            
+            <div class="weapon-indicator">
+                <div>Weapon: <span id="weaponName">Magic Bolt</span></div>
+                <div>Range: <span id="weaponRange">150</span></div>
+                <div>Damage: <span id="weaponDamage">25</span></div>
+            </div>
+        </div>
+        
+        <div id="gameContainer">
+            <canvas id="gameCanvas" width="800" height="600"></canvas>
+            
+            <div id="startScreen">
+                <div class="start-content">
+                    <img src="assets/VampireSurvivors.png" alt="Vampire Survivors" class="game-title">
+                    <div>
+                        <button id="startBtn">START GAME</button>
+                        <button id="howToPlayBtn">HOW TO PLAY</button>
+                        <button id="highScoreBtn">HIGH SCORES</button>
+                    </div>
+                </div>
+                <div class="version-info">
+                    <div>Version: 1.0.26-beta</div>
+                    <div>Build Date: 2025.08.09</div>
+                </div>
+            </div>
+
+            <div id="howToPlayScreen">
+                <div class="how-to-play-content">
+                    <img src="assets/SurviveTheNight.png" alt="Survive The Night" class="game-title">
+                    <div class="controls-info">
+                        <div class="game-description">
+                            Fight against endless waves of enemies! Collect XP to level up and choose powerful upgrades. 
+                            Unlock new weapons and become stronger as you survive longer. How long can you last?
+                        </div>
+                        <div class="controls-title">CONTROLS</div>
+                        <div class="controls-list">
+                            • Use <strong>WASD</strong> or <strong>Arrow Keys</strong> to move<br>
+                            • Collect <strong style="color: #4caf50;">green XP orbs</strong> to level up<br>
+                            • Grab <strong style="color: #ff4444;">red health pickups</strong> to heal<br>
+                            • Weapons fire automatically at nearby enemies<br>
+                            • Choose upgrades when you level up
+                        </div>
+                    </div>
+                    <button id="backBtn">BACK</button>
+                </div>
+            </div>
+
+            <div id="highScoreScreen">
+                <div class="highscore-content">
+                    <div class="highscore-title">HIGH SCORES</div>
+                    <div class="highscore-list" id="highScoreList">
+                        <!-- High scores will be populated here -->
+                    </div>
+                    <button id="backToMenuBtn">BACK TO MENU</button>
+                </div>
+            </div>
+
+            <div id="nameEntryScreen">
+                <div class="name-entry-content">
+                    <div class="name-entry-title">NEW HIGH SCORE!</div>
+                    <div class="score-display">Score: <span id="newScoreDisplay">0</span></div>
+                    <div class="name-input-container">
+                        <div style="margin-bottom: 10px; color: #ccc;">Enter your name (3 letters):</div>
+                        <input type="text" class="name-input" id="playerNameInput" maxlength="3" placeholder="AAA">
+                    </div>
+                    <button id="submitScoreBtn">SUBMIT SCORE</button>
+                </div>
+            </div>
+
+            <div id="levelUpScreen">
+                <div id="upgrade-portrait-container">
+                    <img src="assets/MainCharacter.png" alt="Main Character">
+                </div>
+                <div id="upgrade-options-container"></div>
+                <div id="upgrade-description-panel"></div>
+            </div>
+
+            <div id="gameOver">
+                <h2>Game Over!</h2>
+                <div>Final Score: <span id="finalScore">0</span></div>
+                <div>Time Survived: <span id="finalTime">0:00</span></div>
+                <button id="restartBtn">Play Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class Game {
+            constructor() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.width = this.canvas.width;
+                this.height = this.canvas.height;
+                
+                this.playerImageRight = new Image();
+                this.playerImageRight.src = 'assets/right.png';
+                this.playerImageLeft = new Image();
+                this.playerImageLeft.src = 'assets/left.png';
+
+                this.vampireImages = [];
+                for (let i = 1; i <= 6; i++) {
+                    const left = new Image();
+                    left.src = `assets/vampire-0${i}-left.png`;
+                    const right = new Image();
+                    right.src = `assets/vampire-0${i}-right.png`;
+                    this.vampireImages.push({ left, right });
+                }
+
+                // Store initial values for proper reset
+                this.initialValues = {
+                    enemySpawnRate: 1000,
+                    healthSpawnRate: 15000,
+                    playerSpeed: 2,
+                    playerMaxHealth: 100,
+                    xpToNextLevel: 7,
+                    level: 1,
+                    xp: 0,
+                    score: 0
+                };
+                
+                this.gameRunning = false;
+                this.gameStarted = false;
+                this.gameStartTime = 0;
+                this.lastTime = 0;
+                
+                // Initialize weapons and upgrades BEFORE resetting game variables
+                this.initializeWeapons();
+                this.initializeUpgrades();
+                this.resetGameVariables();
+                this.setupEventListeners();
+            }
+            
+            resetGameVariables() {
+                // Completely destroy the old player object and create a new one
+                delete this.player;
+                this.player = {
+                    x: this.width / 2,
+                    y: this.height / 2,
+                    radius: 15,
+                    speed: 2, // Use hardcoded value instead of this.initialValues.playerSpeed
+                    bonusSpeed: 0,
+                    maxHealth: 100, // Use hardcoded value instead of this.initialValues.playerMaxHealth
+                    health: 100,
+                    direction: 'right'
+                };
+
+                this.enemies = [];
+                this.projectiles = [];
+                this.particles = [];
+                this.xpOrbs = [];
+                this.healthPickups = [];
+                
+                this.keys = {};
+                this.score = this.initialValues.score;
+                this.level = this.initialValues.level;
+                this.xp = this.initialValues.xp;
+                this.xpToNextLevel = this.initialValues.xpToNextLevel;
+                this.enemySpawnRate = this.initialValues.enemySpawnRate;
+                this.lastEnemySpawn = 0;
+                this.lastWeaponFire = 0;
+                this.lastHealthSpawn = 0;
+                this.healthSpawnRate = this.initialValues.healthSpawnRate;
+                
+                // Reset weapon to default and ensure it's properly initialized
+                this.currentWeapon = 'magicBolt';
+                if (this.weapons && this.weapons[this.currentWeapon]) {
+                    this.weapon = Object.assign({}, this.weapons[this.currentWeapon]);
+                    this.weaponCooldown = this.weapon.cooldown;
+                }
+
+                // Reset all upgrade effects to initial values
+                this.xpMagnetRange = 60;
+                this.hasRegeneration = false;
+                this.regenRate = 0;
+                this.regenInterval = 2000;
+                this.lastRegenTime = 0;
+                this.multiStrike = 1;
+                this.damageReduction = 0;
+                this.bonusXpChance = 0;
+                this.lowHealthBonus = false;
+                this.healthPickupValue = 20;
+                
+                // Reset timing variables that affect game speed
+                this.gameStartTime = 0;
+                this.lastTime = 0;
+            }
+
+            initializeWeapons() {
+                this.weapons = {
+                    magicBolt: {
+                        name: "Magic Bolt",
+                        damage: 25,
+                        range: 150,
+                        speed: 8,
+                        cooldown: 500,
+                        projectileCount: 1,
+                        color: '#ffeb3b',
+                        size: 4
+                    },
+                    fireball: {
+                        name: "Fireball",
+                        damage: 35,
+                        range: 120,
+                        speed: 6,
+                        cooldown: 700,
+                        projectileCount: 1,
+                        color: '#ff5722',
+                        size: 6,
+                        explosion: true
+                    },
+                    iceShard: {
+                        name: "Ice Shard",
+                        damage: 20,
+                        range: 180,
+                        speed: 10,
+                        cooldown: 300,
+                        projectileCount: 1,
+                        color: '#03a9f4',
+                        size: 4,
+                        slow: true
+                    },
+                    lightning: {
+                        name: "Lightning",
+                        damage: 45,
+                        range: 200,
+                        speed: 15,
+                        cooldown: 800,
+                        projectileCount: 1,
+                        color: '#e91e63',
+                        size: 3,
+                        pierce: true
+                    },
+                    multiShot: {
+                        name: "Multi-Shot",
+                        damage: 18,
+                        range: 140,
+                        speed: 8,
+                        cooldown: 600,
+                        projectileCount: 3,
+                        color: '#9c27b0',
+                        size: 4,
+                        spread: 0.5
+                    }
+                };
+            }
+
+            initializeUpgrades() {
+                // Available upgrades
+                this.upgrades = [
+                    // Weapon Upgrades
+                    {
+                        name: "Knife Mastery",
+                        description: "Significantly increase weapon damage",
+                        stats: "+18 Damage",
+                        category: "weapon",
+                        apply: function() { 
+                            this.weapon.damage += 18;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Blade Extension",
+                        description: "Extend weapon range and detection radius",
+                        stats: "+30 Range",
+                        category: "weapon",
+                        apply: function() { 
+                            this.weapon.range += 30;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Lightning Reflexes",
+                        description: "Attack much faster with reduced cooldown",
+                        stats: "-50ms Cooldown",
+                        category: "weapon",
+                        apply: function() { 
+                            this.weaponCooldown = Math.max(80, this.weaponCooldown - 50);
+                            this.weapon.cooldown = this.weaponCooldown;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Piercing Shots",
+                        description: "Projectiles travel faster and hit harder",
+                        stats: "+5 Speed, +10 Damage",
+                        category: "weapon",
+                        apply: function() { 
+                            this.weapon.speed += 5;
+                            this.weapon.damage += 10;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Multi-Strike",
+                        description: "Fire additional projectiles per attack",
+                        stats: "+1 Projectile per shot",
+                        category: "weapon",
+                        apply: function() { 
+                            this.multiStrike = (this.multiStrike || 1) + 1;
+                        }.bind(this)
+                    },
+                    
+                    // New Weapon Unlocks
+                    {
+                        name: "Unlock Fireball",
+                        description: "Explosive projectiles that deal area damage",
+                        stats: "New Weapon: Fireball",
+                        category: "weapon",
+                        condition: function() { return this.currentWeapon !== 'fireball'; }.bind(this),
+                        apply: function() { this.unlockWeapon('fireball'); }.bind(this)
+                    },
+                    {
+                        name: "Unlock Ice Shard",
+                        description: "Fast projectiles that slow enemies on hit",
+                        stats: "New Weapon: Ice Shard",
+                        category: "weapon",
+                        condition: function() { return this.currentWeapon !== 'iceShard'; }.bind(this),
+                        apply: function() { this.unlockWeapon('iceShard'); }.bind(this)
+                    },
+                    {
+                        name: "Unlock Lightning",
+                        description: "Piercing bolts that hit multiple enemies",
+                        stats: "New Weapon: Lightning",
+                        category: "weapon",
+                        condition: function() { return this.currentWeapon !== 'lightning'; }.bind(this),
+                        apply: function() { this.unlockWeapon('lightning'); }.bind(this)
+                    },
+                    {
+                        name: "Unlock Multi-Shot",
+                        description: "Fires multiple projectiles in a spread",
+                        stats: "New Weapon: Multi-Shot",
+                        category: "weapon",
+                        condition: function() { return this.currentWeapon !== 'multiShot'; }.bind(this),
+                        apply: function() { this.unlockWeapon('multiShot'); }.bind(this)
+                    },
+                    
+                    // Character Upgrades
+                    {
+                        name: "Athlete Training",
+                        description: "Move significantly faster to dodge enemies",
+                        stats: "+1.0 Movement Speed",
+                        category: "character",
+                        apply: function() { this.player.bonusSpeed = (this.player.bonusSpeed || 0) + 1.0; }.bind(this)
+                    },
+                    {
+                        name: "Vitality Boost",
+                        description: "Permanently increase maximum health",
+                        stats: "+40 Max HP + Full Heal",
+                        category: "character",
+                        apply: function() { 
+                            this.player.maxHealth += 40;
+                            this.player.health = this.player.maxHealth;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Regeneration",
+                        description: "Continuously regenerate health over time",
+                        stats: "+1 HP per 1.5 seconds",
+                        category: "character",
+                        apply: function() { 
+                            this.hasRegeneration = true;
+                            this.regenRate = (this.regenRate || 0) + 1;
+                            this.regenInterval = 1500;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Tough Skin",
+                        description: "Reduce damage taken from all sources",
+                        stats: "-20% Damage Taken",
+                        category: "character",
+                        apply: function() { 
+                            this.damageReduction = (this.damageReduction || 0) + 0.2;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Battle Hardened",
+                        description: "Increase both health and damage resistance",
+                        stats: "+25 Max HP, -15% Damage",
+                        category: "character",
+                        apply: function() { 
+                            this.player.maxHealth += 25;
+                            this.player.health = Math.min(this.player.maxHealth, this.player.health + 25);
+                            this.damageReduction = (this.damageReduction || 0) + 0.15;
+                        }.bind(this)
+                    },
+                    
+                    // Utility Upgrades
+                    {
+                        name: "XP Magnet",
+                        description: "XP orbs are attracted from much farther away",
+                        stats: "+50 Attraction Range",
+                        category: "utility",
+                        apply: function() { 
+                            this.xpMagnetRange += 50;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Lucky Find",
+                        description: "Enemies have a chance to drop bonus XP",
+                        stats: "25% chance for +1 XP",
+                        category: "utility",
+                        apply: function() { 
+                            this.bonusXpChance = (this.bonusXpChance || 0) + 0.25;
+                        }.bind(this)
+                    },
+                    {
+                        name: "Survivor's Instinct",
+                        description: "Gain temporary damage boost when health is low",
+                        stats: "+50% damage when HP < 30%",
+                        category: "utility",
+                        apply: function() { 
+                            this.lowHealthBonus = true;
+                        }.bind(this)
+                    },
+                    {
+                        name: "First Aid Training",
+                        description: "Health pickups spawn more frequently",
+                        stats: "-30% Health Pickup Spawn Time",
+                        category: "utility",
+                        apply: function() { 
+                            this.healthSpawnRate = Math.max(5000, this.healthSpawnRate * 0.7);
+                        }.bind(this)
+                    },
+                    {
+                        name: "Field Medic",
+                        description: "Health pickups restore more health",
+                        stats: "+15 Health per pickup",
+                        category: "utility",
+                        apply: function() { 
+                            this.healthPickupValue = (this.healthPickupValue || 20) + 15;
+                        }.bind(this)
+                    }
+                ];
+            }
+
+            setupEventListeners() {
+                document.addEventListener('keydown', (e) => {
+                    this.keys[e.code] = true;
+                });
+
+                document.addEventListener('keyup', (e) => {
+                    this.keys[e.code] = false;
+                });
+
+                document.getElementById('startBtn').addEventListener('click', () => {
+                    this.startGame();
+                });
+
+                document.getElementById('howToPlayBtn').addEventListener('click', () => {
+                    document.getElementById('startScreen').classList.add('hidden');
+                    document.getElementById('uiContainer').classList.remove('visible');
+                    document.getElementById('howToPlayScreen').style.display = 'flex';
+                });
+
+                document.getElementById('backBtn').addEventListener('click', () => {
+                    document.getElementById('howToPlayScreen').style.display = 'none';
+                    document.getElementById('uiContainer').classList.remove('visible');
+                    document.getElementById('startScreen').classList.remove('hidden');
+                });
+
+                document.getElementById('restartBtn').addEventListener('click', () => {
+                    this.restart();
+                });
+
+                document.getElementById('highScoreBtn').addEventListener('click', () => {
+                    this.showHighScores();
+                });
+
+                document.getElementById('backToMenuBtn').addEventListener('click', () => {
+                    document.getElementById('highScoreScreen').style.display = 'none';
+                    document.getElementById('uiContainer').classList.remove('visible');
+                    document.getElementById('startScreen').classList.remove('hidden');
+                });
+
+                document.getElementById('submitScoreBtn').addEventListener('click', () => {
+                    this.submitHighScore();
+                });
+
+                document.getElementById('playerNameInput').addEventListener('keyup', (e) => {
+                    if (e.code === 'Enter') {
+                        this.submitHighScore();
+                    }
+                    // Auto-uppercase and limit to 3 chars
+                    e.target.value = e.target.value.toUpperCase().slice(0, 3);
+                });
+            }
+
+            // High Score System Methods
+            getHighScores() {
+                const scores = localStorage.getItem('vampireSurvivorsHighScores');
+                return scores ? JSON.parse(scores) : [];
+            }
+
+            saveHighScores(scores) {
+                localStorage.setItem('vampireSurvivorsHighScores', JSON.stringify(scores));
+            }
+
+            isHighScore(score) {
+                const scores = this.getHighScores();
+                return scores.length < 5 || score > scores[scores.length - 1].score;
+            }
+
+            showHighScores() {
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('uiContainer').classList.remove('visible');
+                document.getElementById('highScoreScreen').style.display = 'flex';
+                this.updateHighScoreDisplay();
+            }
+
+            updateHighScoreDisplay(newScoreIndex = -1) {
+                const scores = this.getHighScores();
+                const listContainer = document.getElementById('highScoreList');
+                listContainer.innerHTML = '';
+
+                if (scores.length === 0) {
+                    listContainer.innerHTML = '<div style="text-align: center; color: #ccc; margin: 20px;">No high scores yet!</div>';
+                    return;
+                }
+
+                scores.forEach((scoreEntry, index) => {
+                    const entry = document.createElement('div');
+                    entry.className = 'highscore-entry' + (index === newScoreIndex ? ' new' : '');
+                    entry.innerHTML = `
+                        <span class="highscore-rank">${index + 1}.</span>
+                        <span class="highscore-name">${scoreEntry.name}</span>
+                        <span class="highscore-score">${scoreEntry.score.toLocaleString()}</span>
+                    `;
+                    listContainer.appendChild(entry);
+                });
+            }
+
+            showNameEntry(score) {
+                document.getElementById('newScoreDisplay').textContent = score.toLocaleString();
+                document.getElementById('nameEntryScreen').style.display = 'flex';
+                document.getElementById('playerNameInput').value = '';
+                document.getElementById('playerNameInput').focus();
+            }
+
+            submitHighScore() {
+                const nameInput = document.getElementById('playerNameInput');
+                const playerName = nameInput.value.toUpperCase().trim();
+                
+                if (playerName.length === 0) {
+                    alert('Please enter your name!');
+                    return;
+                }
+
+                const scores = this.getHighScores();
+                const newScore = {
+                    name: playerName.padEnd(3, ' ').slice(0, 3),
+                    score: this.score,
+                    date: new Date().toISOString()
+                };
+
+                scores.push(newScore);
+                scores.sort((a, b) => b.score - a.score);
+                scores.splice(5); // Keep only top 5
+
+                this.saveHighScores(scores);
+
+                // Find the new score's position
+                const newScoreIndex = scores.findIndex(s => s.date === newScore.date);
+
+                // Hide name entry screen and show high scores
+                document.getElementById('nameEntryScreen').style.display = 'none';
+                document.getElementById('highScoreScreen').style.display = 'flex';
+                this.updateHighScoreDisplay(newScoreIndex);
+            }
+
+            checkAndHandleHighScore() {
+                if (this.isHighScore(this.score)) {
+                    // Hide game over screen and show name entry
+                    document.getElementById('gameOver').style.display = 'none';
+                    this.showNameEntry(this.score);
+                }
+            }
+
+            startGame() {
+                document.getElementById('startScreen').classList.add('hidden');
+                document.getElementById('uiContainer').classList.add('visible');
+                this.gameStarted = true;
+                // Always reset game variables when starting a new game
+                this.resetGameVariables();
+                this.start();
+            }
+
+            start() {
+                this.gameRunning = true;
+                this.gameStartTime = Date.now();
+                this.lastTime = Date.now();
+                
+                // Force reset player speed as safety measure
+                this.player.speed = 2;
+                this.player.bonusSpeed = 0;
+                
+                // Ensure all timing-dependent variables are reset
+                this.lastEnemySpawn = 0;
+                this.lastWeaponFire = 0;
+                this.lastHealthSpawn = 0;
+                this.lastRegenTime = 0;
+                this.gameLoop();
+            }
+
+            restart() {
+                // Stop the current game completely
+                this.gameRunning = false;
+                this.gameStarted = false;
+                
+                // Reset all game variables to initial state
+                this.resetGameVariables();
+                
+                // Hide game over screen and level up screen
+                document.getElementById('gameOver').style.display = 'none';
+                document.getElementById('levelUpScreen').style.display = 'none';
+                document.getElementById('uiContainer').classList.remove('visible');
+                document.getElementById('startScreen').classList.remove('hidden');
+            }
+
+            gameLoop() {
+                const currentTime = Date.now();
+                const deltaTime = currentTime - this.lastTime;
+                
+                if (this.gameRunning) {
+                    this.lastTime = currentTime;
+                    this.update(deltaTime);
+                    this.updateUI();
+                }
+                
+                this.render();
+                requestAnimationFrame(() => this.gameLoop());
+            }
+
+            update(deltaTime) {
+                this.updatePlayer(deltaTime);
+                this.updateEnemies(deltaTime);
+                this.updateProjectiles(deltaTime);
+                this.updateParticles();
+                this.updateXpOrbs();
+                this.updateHealthPickups();
+                this.updateRegeneration(deltaTime);
+                this.spawnEnemies(deltaTime);
+                this.spawnHealthPickups(deltaTime);
+                this.fireWeapon(deltaTime);
+                this.checkCollisions();
+                this.updateDifficulty();
+            }
+
+            updatePlayer(deltaTime) {
+                let dx = 0, dy = 0;
+
+                if (this.keys['KeyW'] || this.keys['ArrowUp']) dy -= 1;
+                if (this.keys['KeyS'] || this.keys['ArrowDown']) dy += 1;
+                if (this.keys['KeyA'] || this.keys['ArrowLeft']) {
+                    dx -= 1;
+                    this.player.direction = 'left';
+                }
+                if (this.keys['KeyD'] || this.keys['ArrowRight']) {
+                    dx += 1;
+                    this.player.direction = 'right';
+                }
+
+                // Normalize diagonal movement
+                if (dx !== 0 && dy !== 0) {
+                    dx *= 0.707;
+                    dy *= 0.707;
+                }
+
+                // Force reset speed values if game was just restarted (safety check)
+                if (this.gameStartTime && (Date.now() - this.gameStartTime) < 1000) {
+                    this.player.speed = 2;
+                    this.player.bonusSpeed = 0;
+                }
+
+                const effectiveSpeed = this.player.speed + (this.player.bonusSpeed || 0);
+                // Make movement frame-rate independent using deltaTime
+                const speedMultiplier = deltaTime / 16.67; // Normalize to 60fps (16.67ms per frame)
+                this.player.x += dx * effectiveSpeed * speedMultiplier;
+                this.player.y += dy * effectiveSpeed * speedMultiplier;
+
+                // Keep player in bounds
+                this.player.x = Math.max(this.player.radius, Math.min(this.width - this.player.radius, this.player.x));
+                this.player.y = Math.max(this.player.radius, Math.min(this.height - this.player.radius, this.player.y));
+            }
+
+            spawnEnemies(deltaTime) {
+                this.lastEnemySpawn += deltaTime;
+                
+                if (this.lastEnemySpawn >= this.enemySpawnRate) {
+                    this.spawnEnemy();
+                    this.lastEnemySpawn = 0;
+                }
+            }
+
+            spawnHealthPickups(deltaTime) {
+                this.lastHealthSpawn += deltaTime;
+                
+                if (this.lastHealthSpawn >= this.healthSpawnRate) {
+                    this.spawnHealthPickup();
+                    this.lastHealthSpawn = 0;
+                }
+            }
+
+            spawnHealthPickup() {
+                const padding = 50;
+                const x = padding + Math.random() * (this.width - padding * 2);
+                const y = padding + Math.random() * (this.height - padding * 2);
+                
+                const healthPickup = {
+                    x: x,
+                    y: y,
+                    radius: 8,
+                    value: this.healthPickupValue || 20,
+                    life: 3000,
+                    color: '#ff4444',
+                    glowColor: '#ff7777',
+                    pulsePhase: 0
+                };
+                
+                this.healthPickups.push(healthPickup);
+            }
+
+            updateHealthPickups() {
+                for (let i = this.healthPickups.length - 1; i >= 0; i--) {
+                    const pickup = this.healthPickups[i];
+                    
+                    pickup.pulsePhase += 0.1;
+                    
+                    pickup.life--;
+                    if (pickup.life <= 0) {
+                        this.healthPickups.splice(i, 1);
+                    }
+                }
+            }
+
+            spawnEnemy() {
+                const side = Math.floor(Math.random() * 4);
+                let x, y;
+
+                switch (side) {
+                    case 0: // Top
+                        x = Math.random() * this.width;
+                        y = -20;
+                        break;
+                    case 1: // Right
+                        x = this.width + 20;
+                        y = Math.random() * this.height;
+                        break;
+                    case 2: // Bottom
+                        x = Math.random() * this.width;
+                        y = this.height + 20;
+                        break;
+                    case 3: // Left
+                        x = -20;
+                        y = Math.random() * this.height;
+                        break;
+                }
+
+                const enemyType = Math.floor(Math.random() * this.vampireImages.length);
+                const enemy = {
+                    x: x,
+                    y: y,
+                    radius: 8 + Math.random() * 6,
+                    speed: 0.8 + Math.random() * 0.7 + (this.level - 1) * 0.1,
+                    health: 1 + Math.floor(this.level / 3),
+                    maxHealth: 1 + Math.floor(this.level / 3),
+                    damage: 10 + Math.floor(this.level / 2),
+                    direction: 'left',
+                    imageSet: this.vampireImages[enemyType]
+                };
+
+                this.enemies.push(enemy);
+            }
+
+            updateEnemies(deltaTime) {
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    const enemy = this.enemies[i];
+                    
+                    if (enemy.slowEffect > 0) {
+                        enemy.slowEffect--;
+                        if (enemy.slowEffect === 0 && enemy.originalSpeed) {
+                            enemy.speed = enemy.originalSpeed;
+                        }
+                    }
+                    
+                    const dx = this.player.x - enemy.x;
+                    const dy = this.player.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance > 0) {
+                        enemy.x += (dx / distance) * enemy.speed;
+                        enemy.y += (dy / distance) * enemy.speed;
+                        enemy.direction = dx > 0 ? 'right' : 'left';
+                    }
+
+                    if (distance > this.width + this.height) {
+                        this.enemies.splice(i, 1);
+                    }
+                }
+            }
+
+            fireWeapon(deltaTime) {
+                this.lastWeaponFire += deltaTime;
+                
+                if (this.lastWeaponFire >= this.weaponCooldown && this.enemies.length > 0) {
+                    let closestEnemy = null;
+                    let closestDistance = this.weapon.range;
+
+                    for (const enemy of this.enemies) {
+                        const dx = enemy.x - this.player.x;
+                        const dy = enemy.y - this.player.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < closestDistance) {
+                            closestEnemy = enemy;
+                            closestDistance = distance;
+                        }
+                    }
+
+                    if (closestEnemy) {
+                        this.createProjectile(closestEnemy);
+                        this.lastWeaponFire = 0;
+                    }
+                }
+            }
+
+            createProjectile(target) {
+                const dx = target.x - this.player.x;
+                const dy = target.y - this.player.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                let damage = this.weapon.damage;
+                if (this.lowHealthBonus && this.player.health < this.player.maxHealth * 0.3) {
+                    damage *= 1.5;
+                }
+
+                if (this.currentWeapon === 'multiShot') {
+                    const projectileCount = this.weapon.projectileCount;
+                    const spread = this.weapon.spread || 0.5;
+                    
+                    for (let i = 0; i < projectileCount; i++) {
+                        const angle = Math.atan2(dy, dx);
+                        const spreadAngle = angle + (i - Math.floor(projectileCount / 2)) * spread;
+                        
+                        const projectile = {
+                            x: this.player.x,
+                            y: this.player.y,
+                            vx: Math.cos(spreadAngle) * this.weapon.speed,
+                            vy: Math.sin(spreadAngle) * this.weapon.speed,
+                            radius: this.weapon.size,
+                            damage: damage,
+                            color: this.weapon.color,
+                            life: 1000,
+                            weaponType: this.currentWeapon
+                        };
+                        
+                        this.projectiles.push(projectile);
+                    }
+                } else {
+                    const projectile = {
+                        x: this.player.x,
+                        y: this.player.y,
+                        vx: (dx / distance) * this.weapon.speed,
+                        vy: (dy / distance) * this.weapon.speed,
+                        radius: this.weapon.size,
+                        damage: damage,
+                        color: this.weapon.color,
+                        life: 1000,
+                        weaponType: this.currentWeapon
+                    };
+
+                    this.projectiles.push(projectile);
+                }
+            }
+
+            updateProjectiles(deltaTime) {
+                for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                    const projectile = this.projectiles[i];
+                    
+                    const speedMultiplier = deltaTime / 16.67; // Normalize to 60fps
+                    projectile.x += projectile.vx * speedMultiplier;
+                    projectile.y += projectile.vy * speedMultiplier;
+                    projectile.life -= deltaTime;
+
+                    if (projectile.x < 0 || projectile.x > this.width || 
+                        projectile.y < 0 || projectile.y > this.height || 
+                        projectile.life <= 0) {
+                        this.projectiles.splice(i, 1);
+                    }
+                }
+            }
+
+            updateParticles() {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    const particle = this.particles[i];
+                    
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.vx *= 0.98;
+                    particle.vy *= 0.98;
+                    particle.life--;
+                    particle.alpha = particle.life / particle.maxLife;
+
+                    if (particle.life <= 0) {
+                        this.particles.splice(i, 1);
+                    }
+                }
+            }
+
+            updateRegeneration(deltaTime) {
+                if (this.hasRegeneration && this.player.health < this.player.maxHealth) {
+                    this.lastRegenTime += deltaTime;
+                    if (this.lastRegenTime >= 2000) {
+                        this.player.health = Math.min(this.player.maxHealth, this.player.health + this.regenRate);
+                        this.lastRegenTime = 0;
+                    }
+                }
+            }
+
+            updateXpOrbs() {
+                for (let i = this.xpOrbs.length - 1; i >= 0; i--) {
+                    const orb = this.xpOrbs[i];
+                    
+                    const dx = this.player.x - orb.x;
+                    const dy = this.player.y - orb.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    const attractRange = this.xpMagnetRange || 60;
+                    
+                    if (distance < attractRange) {
+                        orb.x += (dx / distance) * orb.speed;
+                        orb.y += (dy / distance) * orb.speed;
+                        orb.speed += 0.2;
+                    }
+                    
+                    orb.life--;
+                    if (orb.life <= 0) {
+                        this.xpOrbs.splice(i, 1);
+                    }
+                }
+            }
+
+            createXpOrb(x, y, value = 1) {
+                const offsetX = (Math.random() - 0.5) * 20;
+                const offsetY = (Math.random() - 0.5) * 20;
+                
+                const orb = {
+                    x: x + offsetX,
+                    y: y + offsetY,
+                    radius: 4 + value,
+                    xpValue: value,
+                    speed: 2,
+                    attractRadius: this.xpMagnetRange || 60,
+                    life: 1800,
+                    color: '#4caf50',
+                    glowColor: '#8bc34a'
+                };
+                
+                this.xpOrbs.push(orb);
+            }
+
+            gainXp(amount) {
+                this.xp += amount;
+                
+                if (this.xp >= this.xpToNextLevel) {
+                    this.levelUp();
+                }
+            }
+
+            levelUp() {
+                this.level++;
+                this.xp -= this.xpToNextLevel;
+                this.xpToNextLevel = Math.floor(this.xpToNextLevel * 1.15);
+                
+                this.gameRunning = false;
+                this.showUpgradeOptions();
+            }
+
+            showUpgradeOptions() {
+                var availableUpgrades = this.upgrades.filter(function(upgrade) {
+                    return !upgrade.condition || upgrade.condition();
+                });
+                
+                var selectedUpgrades = [];
+                
+                for (var i = 0; i < 3 && availableUpgrades.length > 0; i++) {
+                    var randomIndex = Math.floor(Math.random() * availableUpgrades.length);
+                    selectedUpgrades.push(availableUpgrades.splice(randomIndex, 1)[0]);
+                }
+                
+                var upgradeOptions = document.getElementById('upgrade-options-container');
+                var upgradeDescriptionPanel = document.getElementById('upgrade-description-panel');
+                upgradeOptions.innerHTML = '';
+                upgradeDescriptionPanel.innerHTML = '';
+                
+                var self = this;
+                selectedUpgrades.forEach(function(upgrade, index) {
+                    var card = document.createElement('div');
+                    card.className = 'upgrade-card';
+                    card.innerHTML = upgrade.name;
+                    
+                    card.addEventListener('mouseover', function() {
+                        upgradeDescriptionPanel.innerHTML = `<h3>${upgrade.name}</h3><p>${upgrade.description}</p><p>${upgrade.stats}</p>`;
+                    });
+
+                    card.addEventListener('mouseout', function() {
+                        upgradeDescriptionPanel.innerHTML = '';
+                    });
+
+                    card.addEventListener('click', function() {
+                        self.selectUpgrade(upgrade);
+                    });
+                    
+                    upgradeOptions.appendChild(card);
+                });
+                
+                document.getElementById('levelUpScreen').style.display = 'block';
+            }
+
+            unlockWeapon(weaponType) {
+                this.currentWeapon = weaponType;
+                this.weapon = Object.assign({}, this.weapons[weaponType]);
+                this.weaponCooldown = this.weapon.cooldown;
+                
+                this.createWeaponUnlockParticles();
+            }
+
+            selectUpgrade(upgrade) {
+                upgrade.apply();
+                
+                document.getElementById('levelUpScreen').style.display = 'none';
+                
+                this.player.health = this.player.maxHealth;
+                
+                this.createLevelUpParticles();
+                
+                this.gameRunning = true;
+                this.lastTime = Date.now();
+            }
+
+            createHitParticles(x, y, color) {
+                for (let i = 0; i < 8; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 6,
+                        vy: (Math.random() - 0.5) * 6,
+                        color: color,
+                        radius: 2 + Math.random() * 2,
+                        life: 30,
+                        maxLife: 30,
+                        alpha: 1
+                    });
+                }
+            }
+
+            createDeathParticles(x, y, color) {
+                for (let i = 0; i < 15; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 10,
+                        vy: (Math.random() - 0.5) * 10,
+                        color: color,
+                        radius: 1 + Math.random() * 3,
+                        life: 60,
+                        maxLife: 60,
+                        alpha: 1
+                    });
+                }
+            }
+
+            createXpCollectParticles(x, y) {
+                for (let i = 0; i < 6; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        color: '#4caf50',
+                        radius: 1 + Math.random() * 2,
+                        life: 30,
+                        maxLife: 30,
+                        alpha: 1
+                    });
+                }
+            }
+
+            createHealthCollectParticles(x, y) {
+                for (let i = 0; i < 6; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 4,
+                        vy: (Math.random() - 0.5) * 4,
+                        color: '#ff4444',
+                        radius: 1 + Math.random() * 2,
+                        life: 30,
+                        maxLife: 30,
+                        alpha: 1
+                    });
+                }
+            }
+
+            createWeaponUnlockParticles() {
+                for (let i = 0; i < 50; i++) {
+                    this.particles.push({
+                        x: this.player.x,
+                        y: this.player.y,
+                        vx: (Math.random() - 0.5) * 15,
+                        vy: (Math.random() - 0.5) * 15,
+                        color: this.weapon.color,
+                        radius: 2 + Math.random() * 5,
+                        life: 120,
+                        maxLife: 120,
+                        alpha: 1
+                    });
+                }
+            }
+
+            createLevelUpParticles() {
+                for (let i = 0; i < 30; i++) {
+                    this.particles.push({
+                        x: this.player.x,
+                        y: this.player.y,
+                        vx: (Math.random() - 0.5) * 12,
+                        vy: (Math.random() - 0.5) * 12,
+                        color: '#ffeb3b',
+                        radius: 2 + Math.random() * 4,
+                        life: 90,
+                        maxLife: 90,
+                        alpha: 1
+                    });
+                }
+            }
+
+            createExplosion(x, y, radius, damage) {
+                for (let i = 0; i < 20; i++) {
+                    this.particles.push({
+                        x: x,
+                        y: y,
+                        vx: (Math.random() - 0.5) * 12,
+                        vy: (Math.random() - 0.5) * 12,
+                        color: '#ff5722',
+                        radius: 2 + Math.random() * 4,
+                        life: 60,
+                        maxLife: 60,
+                        alpha: 1
+                    });
+                }
+                
+                for (let i = this.enemies.length - 1; i >= 0; i--) {
+                    const enemy = this.enemies[i];
+                    const dx = enemy.x - x;
+                    const dy = enemy.y - y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < radius) {
+                        enemy.health -= damage;
+                        this.createHitParticles(enemy.x, enemy.y, '#ff5722');
+                        
+                        if (enemy.health <= 0) {
+                            this.score += 5;
+                            this.createDeathParticles(enemy.x, enemy.y, enemy.color);
+                            this.createXpOrb(enemy.x, enemy.y, 1);
+                            this.enemies.splice(i, 1);
+                        }
+                    }
+                }
+            }
+
+            checkCollisions() {
+                // Projectile vs Enemy collisions
+                for (let i = this.projectiles.length - 1; i >= 0; i--) {
+                    const projectile = this.projectiles[i];
+                    
+                    for (let j = this.enemies.length - 1; j >= 0; j--) {
+                        const enemy = this.enemies[j];
+                        const dx = projectile.x - enemy.x;
+                        const dy = projectile.y - enemy.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+
+                        if (distance < projectile.radius + enemy.radius) {
+                            enemy.health -= projectile.damage;
+                            this.createHitParticles(enemy.x, enemy.y, enemy.color);
+                            
+                            if (projectile.weaponType === 'fireball' && this.weapons.fireball.explosion) {
+                                this.createExplosion(enemy.x, enemy.y, 40, projectile.damage * 0.5);
+                            } else if (projectile.weaponType === 'iceShard' && this.weapons.iceShard.slow) {
+                                enemy.slowEffect = 120;
+                                enemy.originalSpeed = enemy.originalSpeed || enemy.speed;
+                                enemy.speed = enemy.originalSpeed * 0.5;
+                            }
+                            
+                            if (projectile.weaponType !== 'lightning' || !this.weapons.lightning.pierce) {
+                                this.projectiles.splice(i, 1);
+                            }
+
+                            if (enemy.health <= 0) {
+                                this.score += 10 + (this.level - 1) * 5;
+                                this.createDeathParticles(enemy.x, enemy.y, enemy.color);
+                                
+                                let xpValue = 1 + Math.floor(Math.random() * 2);
+                                
+                                if (Math.random() < this.bonusXpChance) {
+                                    xpValue += 1;
+                                }
+                                
+                                this.createXpOrb(enemy.x, enemy.y, xpValue);
+                                
+                                this.enemies.splice(j, 1);
+                            }
+                            
+                            if (projectile.weaponType !== 'lightning' || !this.weapons.lightning.pierce) {
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // Player vs Enemy collisions
+                for (const enemy of this.enemies) {
+                    const dx = this.player.x - enemy.x;
+                    const dy = this.player.y - enemy.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < this.player.radius + enemy.radius) {
+                        let damage = enemy.damage;
+                        if (this.damageReduction > 0) {
+                            damage = damage * (1 - this.damageReduction);
+                        }
+                        
+                        this.player.health -= Math.floor(damage);
+                        this.createHitParticles(this.player.x, this.player.y, '#ff4444');
+                        
+                        const pushDistance = 30;
+                        enemy.x -= (dx / distance) * pushDistance;
+                        enemy.y -= (dy / distance) * pushDistance;
+
+                        if (this.player.health <= 0) {
+                            this.gameOver();
+                        }
+                    }
+                }
+
+                // Player vs XP Orb collisions
+                for (let i = this.xpOrbs.length - 1; i >= 0; i--) {
+                    const orb = this.xpOrbs[i];
+                    const dx = this.player.x - orb.x;
+                    const dy = this.player.y - orb.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < this.player.radius + orb.radius) {
+                        this.gainXp(orb.xpValue);
+                        this.createXpCollectParticles(orb.x, orb.y);
+                        this.xpOrbs.splice(i, 1);
+                    }
+                }
+
+                // Player vs Health Pickup collisions
+                for (let i = this.healthPickups.length - 1; i >= 0; i--) {
+                    const pickup = this.healthPickups[i];
+                    const dx = this.player.x - pickup.x;
+                    const dy = this.player.y - pickup.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < this.player.radius + pickup.radius) {
+                        const oldHealth = this.player.health;
+                        this.player.health = Math.min(this.player.maxHealth, this.player.health + pickup.value);
+                        
+                        if (oldHealth < this.player.maxHealth) {
+                            this.createHealthCollectParticles(pickup.x, pickup.y);
+                            this.healthPickups.splice(i, 1);
+                        }
+                    }
+                }
+            }
+
+            updateDifficulty() {
+                const timeElapsed = Date.now() - this.gameStartTime;
+                
+                // Always calculate from the initial base spawn rate
+                const baseSpawnRate = this.initialValues.enemySpawnRate;
+                this.enemySpawnRate = Math.max(200, baseSpawnRate - Math.floor(timeElapsed / 10000) * 100);
+            }
+
+            gameOver() {
+                this.gameRunning = false;
+                const timeElapsed = Date.now() - this.gameStartTime;
+                const minutes = Math.floor(timeElapsed / 60000);
+                const seconds = Math.floor((timeElapsed % 60000) / 1000);
+                
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('finalTime').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                
+                // Check for high score before showing game over screen
+                if (this.isHighScore(this.score)) {
+                    this.showNameEntry(this.score);
+                } else {
+                    document.getElementById('gameOver').style.display = 'block';
+                }
+            }
+
+            updateUI() {
+                const timeElapsed = Date.now() - this.gameStartTime;
+                const minutes = Math.floor(timeElapsed / 60000);
+                const seconds = Math.floor((timeElapsed % 60000) / 1000);
+                
+                document.getElementById('level').textContent = this.level;
+                document.getElementById('score').textContent = this.score;
+                document.getElementById('time').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+                document.getElementById('weaponName').textContent = this.weapon.name;
+                document.getElementById('weaponRange').textContent = this.weapon.range;
+                document.getElementById('weaponDamage').textContent = this.weapon.damage;
+                
+                const xpProgress = (this.xp / this.xpToNextLevel) * 100;
+                document.getElementById('xpFill').style.width = `${xpProgress}%`;
+                document.getElementById('xpText').textContent = `XP: ${this.xp} / ${this.xpToNextLevel}`;
+                
+                const healthProgress = (Math.max(0, this.player.health) / this.player.maxHealth) * 100;
+                document.getElementById('healthFill').style.width = `${healthProgress}%`;
+                document.getElementById('healthText').textContent = `${Math.max(0, Math.floor(this.player.health))} / ${this.player.maxHealth}`;
+                
+                const healthFill = document.getElementById('healthFill');
+                if (healthProgress > 60) {
+                    healthFill.style.background = 'linear-gradient(90deg, #4caf50, #8bc34a)';
+                } else if (healthProgress > 30) {
+                    healthFill.style.background = 'linear-gradient(90deg, #ff9800, #ffc107)';
+                } else {
+                    healthFill.style.background = 'linear-gradient(90deg, #f44336, #ff7043)';
+                }
+            }
+
+            render() {
+                // Clear the entire canvas completely (no trails)
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                
+                // Fill with solid background
+                this.ctx.fillStyle = '#000000';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+
+                for (const particle of this.particles) {
+                    this.ctx.save();
+                    this.ctx.globalAlpha = particle.alpha;
+                    this.ctx.fillStyle = particle.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(particle.x, particle.y, particle.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.restore();
+                }
+
+                for (const enemy of this.enemies) {
+                    const image = enemy.direction === 'right' ? enemy.imageSet.right : enemy.imageSet.left;
+                    const imageSize = enemy.radius * 3.5;
+                    this.ctx.drawImage(image, enemy.x - imageSize / 2, enemy.y - imageSize / 2, imageSize, imageSize);
+                    
+                    if (enemy.health < enemy.maxHealth) {
+                        const barWidth = enemy.radius * 2;
+                        const barHeight = 3;
+                        const x = enemy.x - barWidth / 2;
+                        const y = enemy.y - enemy.radius - 8;
+                        
+                        this.ctx.fillStyle = '#333';
+                        this.ctx.fillRect(x, y, barWidth, barHeight);
+                        
+                        this.ctx.fillStyle = '#4caf50';
+                        this.ctx.fillRect(x, y, (enemy.health / enemy.maxHealth) * barWidth, barHeight);
+                    }
+                }
+
+                for (const pickup of this.healthPickups) {
+                    const pulseScale = 1 + Math.sin(pickup.pulsePhase) * 0.2;
+                    const radius = pickup.radius * pulseScale;
+                    
+                    this.ctx.shadowColor = pickup.glowColor;
+                    this.ctx.shadowBlur = 15;
+                    
+                    this.ctx.fillStyle = pickup.color;
+                    
+                    this.ctx.fillRect(pickup.x - radius, pickup.y - radius * 0.3, radius * 2, radius * 0.6);
+                    
+                    this.ctx.fillRect(pickup.x - radius * 0.3, pickup.y - radius, radius * 0.6, radius * 2);
+                    
+                    this.ctx.shadowBlur = 0;
+                }
+
+                for (const orb of this.xpOrbs) {
+                    this.ctx.shadowColor = orb.glowColor;
+                    this.ctx.shadowBlur = 15;
+                    
+                    this.ctx.fillStyle = orb.color;
+                    this.ctx.beginPath();
+                    this.ctx.arc(orb.x, orb.y, orb.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.fillStyle = orb.glowColor;
+                    this.ctx.beginPath();
+                    this.ctx.arc(orb.x, orb.y, orb.radius * 0.6, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    
+                    this.ctx.shadowBlur = 0;
+                }
+
+                for (const projectile of this.projectiles) {
+                    this.ctx.fillStyle = projectile.color;
+                    this.ctx.shadowColor = projectile.color;
+                    this.ctx.shadowBlur = 10;
+                    this.ctx.beginPath();
+                    this.ctx.arc(projectile.x, projectile.y, projectile.radius, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.shadowBlur = 0;
+                }
+
+                const image = this.player.direction === 'right' ? this.playerImageRight : this.playerImageLeft;
+                const imageSize = this.player.radius * 3.5;
+                this.ctx.drawImage(image, this.player.x - imageSize / 2, this.player.y - imageSize / 2, imageSize, imageSize);
+
+                this.ctx.strokeStyle = 'rgba(255, 235, 59, 0.1)';
+                this.ctx.lineWidth = 1;
+                this.ctx.setLineDash([5, 5]);
+                this.ctx.beginPath();
+                this.ctx.arc(this.player.x, this.player.y, this.weapon.range, 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+            }
+        }
+
+        window.onload = () => {
+            new Game();
+        };
+    </script>
+</body>
+</html>
